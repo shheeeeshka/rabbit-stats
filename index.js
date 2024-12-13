@@ -96,6 +96,34 @@ const launch = async () => {
                 console.error(err);
             }
         });
+        app.post("/start-parsing-all", async (req, res) => {
+            try {
+                const shops = await Shop.find();
+                if (!shops.length) return res.status(400).json("Empty array");
+                for (let shop of shops) {
+                    try {
+                        const {
+                            reviewsCount,
+                            soldProductCount,
+                            totalProductCount,
+                        } = await parseWB(shop?.url);
+                        const newHistory = new History({
+                            shopId: shop._id,
+                            totalProductCount,
+                            soldProductCount,
+                            totalReviewsCount: reviewsCount,
+                        });
+                        await newHistory.save();
+                    } catch (err) {
+                        console.error(err.message);
+                        return res.status(400).json("Error");
+                    }
+                    return res.status(200).json("shops");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
     } catch (e) {
         console.error(e)
     }

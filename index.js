@@ -96,7 +96,7 @@ const launch = async () => {
                 console.error(err);
             }
         });
-        app.post("/start-parsing-all", async (req, res) => {
+        app.get("/start-parsing-all", async (req, res) => {
             try {
                 const shops = await Shop.find();
                 if (!shops.length) return res.status(400).json("Empty array");

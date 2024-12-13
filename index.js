@@ -71,19 +71,15 @@ const launch = async () => {
                 const { name, url } = req.body;
                 console.log({ name, url });
                 const shop = await Shop.findOne({ name, url });
-                if (!shop) return res.status(400).json("Error");
+                if (!shop) return res.status(400).json({ message: "No shop found", shop });
                 try {
-                    const {
-                        reviewsCount,
-                        soldProductCount,
-                        totalProductCount,
-                    } = await parseWB(url);
-                    // if (!shopInfo) return res.status(400).json("Error");
+                    const s = await parseWB(url);
+                    if (!s) return res.status(400).json("Error parsing shop");
                     const newHistory = new History({
                         shopId: shop._id,
-                        totalProductCount,
-                        soldProductCount,
-                        totalReviewsCount: reviewsCount,
+                        totalProductCount: s.totalProductCount,
+                        soldProductCount: s.soldProductCount,
+                        totalReviewsCount: s.reviewsCount,
                     });
                     await newHistory.save();
 
@@ -102,21 +98,17 @@ const launch = async () => {
                 if (!shops.length) return res.status(400).json("Empty array");
                 for (let shop of shops) {
                     try {
-                        const {
-                            reviewsCount,
-                            soldProductCount,
-                            totalProductCount,
-                        } = await parseWB(shop?.url);
+                        const s = await parseWB(shop?.url);
                         const newHistory = new History({
                             shopId: shop._id,
-                            totalProductCount,
-                            soldProductCount,
-                            totalReviewsCount: reviewsCount,
+                            totalProductCount: s.totalProductCount,
+                            soldProductCount: s.soldProductCount,
+                            totalReviewsCount: s.reviewsCount,
                         });
                         await newHistory.save();
                     } catch (err) {
                         console.error(err.message);
-                        return res.status(400).json("Error");
+                        return res.status(400).json({ "Error": err.message });
                     }
                     return res.status(200).json("shops");
                 }

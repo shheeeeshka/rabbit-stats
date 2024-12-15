@@ -70,6 +70,7 @@ const launch = async () => {
             try {
                 const { name, url } = req.body;
                 console.log({ name, url });
+                console.log("parsing");
                 const shop = await Shop.findOne({ name, url });
                 if (!shop) return res.status(400).json({ message: "No shop found", shop });
                 try {
@@ -94,24 +95,29 @@ const launch = async () => {
         });
         app.get("/start-parsing-all", async (req, res) => {
             try {
-                const shops = await Shop.find();
+                const shops = await Shop.find({});
+                console.log("parsing-all");
                 if (!shops.length) return res.status(400).json("Empty array");
+                console.log(shops);
                 for (let shop of shops) {
                     try {
-                        const s = await parseWB(shop?.url);
+                        console.log(shop);
+                        if (!shop.url) continue;
+                        const s = await parseWB(shop?.url).catch(err => console.error(err));
                         const newHistory = new History({
                             shopId: shop._id,
-                            totalProductCount: s.totalProductCount,
-                            soldProductCount: s.soldProductCount,
-                            totalReviewsCount: s.reviewsCount,
+                            totalProductCount: s?.totalProductCount,
+                            soldProductCount: s?.soldProductCount,
+                            totalReviewsCount: s?.reviewsCount,
                         });
                         await newHistory.save();
+                        console.log({ newHistory });
                     } catch (err) {
                         console.error(err.message);
                         return res.status(400).json({ "Error": err.message });
                     }
-                    return res.status(200).json("shops");
                 }
+                return res.status(200).json("shops");
             } catch (err) {
                 console.error(err);
             }
